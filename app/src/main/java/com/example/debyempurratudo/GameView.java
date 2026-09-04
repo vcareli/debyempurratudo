@@ -3,28 +3,91 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private GameThread gameThread;
-    private Paint paint;
-    private int playerLin = 1;
-    private int playerCol = 1;
+    private final Paint paint;
+    private int playerLin;
+    private int playerCol;
+    private int tamanhoBloco;
+    private boolean venceu;
+    private int[][] mapa;
+    private int[][] alvo;
+    private LevelManager levelManager = new LevelManager();
 
-    //Matriz do mapa inicial
-    // 1 - Parede, 0 - Chao vazio
-    int[][] mapa = {
-            {1, 1, 1, 1, 1},
-            {1, 0, 0, 0, 1},
-            {1, 0, 0, 0, 1},
-            {1, 1, 1, 1, 1},
-    };
     public GameView(Context context) {
         super(context);
         getHolder().addCallback(this);
         gameThread = new GameThread(getHolder(), this);
         paint = new Paint();
+        carregarFaseAtual();
+    }
+
+    private void carregarFaseAtual() {
+        this.mapa = levelManager.getMapaAtual();
+        this.alvo = levelManager.getAlvoAtual();
+        this.playerLin = 1;
+        this.playerCol = 1;
+        this.venceu = false;
+
+        if (getWidth() > 0 && mapa[0].length > 0) tamanhoBloco = getWidth() / mapa[0].length;
+    }
+
+    private void proximoNivel() {
+        if (levelManager.nextLevel()) {
+            carregarFaseAtual();
+        } else {
+            rendenizar(null);
+        }
+    }
+
+    public boolean checkVitory() {
+        for (int i = 0; i < alvo.length; i++) {
+            for (int j = 0; j < alvo[i].length; j++) {
+                //Se existe alvo, mas na matriz nao tem caixa - nao venceu
+                if (alvo[i][j] == 3 && mapa[i][j] != 2) return false;
+            }
+        }
+        return true;        //todas as caixas estao nos alvos
+    }
+
+    public void tentarMover(int dLin, int dCol) { //Metodo para processos de movimentacao
+        int newLin = playerLin + dLin;
+        int newCol = playerCol + dCol;
+
+        if (newLin < 0 || newLin >= mapa.length || newCol < 0 || newCol >= mapa[0].length || venceu) {
+            return;
+        }
+
+        int elementoDestino = mapa[newLin][newCol];
+        if (elementoDestino == 1) {             //se for parede nao move
+            return;
+        } else if (elementoDestino == 2) {      //se for caixa tenta empurrar
+            int caixaNewLine = newLin + dLin;
+            int caixaNewCol = newCol + dCol;
+            if (caixaNewLine < 0 || caixaNewLine >= mapa.length || caixaNewCol < 0 ||
+                    caixaNewCol >= mapa[0].length) {
+                return;
+            }
+
+            int alemCaixa =  mapa[caixaNewLine][caixaNewCol];
+            if (alemCaixa == 1 || alemCaixa == 2) {
+                return;
+            } else if (alemCaixa == 0 || alemCaixa == 3) {
+                mapa[caixaNewLine][caixaNewCol] = 2;
+                mapa[newLin][newCol] = 0;
+                playerLin = newLin;
+                playerCol = newCol;
+                if (checkVitory()) venceu = true;
+            }
+        } else {                                //se for chao ou o destino move
+            playerLin = newLin;
+            playerCol = newCol;
+        }
     }
 
     @Override
@@ -35,7 +98,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        int tamanhoBloco = 120;
         tamanhoBloco = width / mapa[0].length;
     }
 
@@ -54,13 +116,48 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (venceu) {
+                proximoNivel();
+                return true;
+            }
+            float touchX = event.getX();
+            float touchY = event.getY();
+            int larguraTela = getWidth();
+            int alturaTela = getHeight();
+            //Logica quadrantes para navegacao
+            //Se tocar metade superior -> sobe
+            //Se tocar metade inferior -> desce
+            //Se tocar lateral esq -> esq
+            //Se tocar lateral dir -> dir
+            if (touchY < alturaTela / 3f) {
+                tentarMover(-1, 0);
+            } else if (touchY > (alturaTela * 2) / 3f) {
+                tentarMover(1, 0);;
+            } else if (touchX < larguraTela / 2f) {
+                tentarMover(0, -1);;
+            } else if (touchX > larguraTela / 2f) {
+                tentarMover(0, 1);;
+            }
+            return true;
+        }
+        return super.onTouchEvent(event);
+    }
+
     public void rendenizar(Canvas canvas) {
         if (canvas != null) {
+            if (venceu) {
+                float centroX = getWidth() / 2f;
+                float centroY = getHeight() / 2f;
+                paint.setColor(Color.RED);
+                paint.setTextSize(80f);
+                paint.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("🎉 VOCÊ VENCEU!", centroX, centroY, paint);
+            }
             // Fundo da tela
             canvas.drawColor(Color.BLACK);
-
-            int tamanhoBloco = 120; // Tamanho em pixels de cada quadrado
-
             // Desenhar a matriz linha por linha e coluna por coluna
             for (int linha = 0; linha < mapa.length; linha++) {
                 for (int coluna = 0; coluna < mapa[linha].length; coluna++) {
