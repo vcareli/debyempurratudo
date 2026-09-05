@@ -6,7 +6,7 @@ import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
+//import android.widget.Toast;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private GameThread gameThread;
