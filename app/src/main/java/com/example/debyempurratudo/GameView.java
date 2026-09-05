@@ -39,6 +39,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         this.playerLin = 1;
         this.playerCol = 1;
         this.venceu = false;
+        this.faseZerada = false;
 
         if (getWidth() > 0 && mapa[0].length > 0) tamanhoBloco = getWidth() / mapa[0].length;
     }
