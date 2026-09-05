@@ -17,7 +17,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private boolean venceu;
     private int[][] mapa;
     private int[][] alvo;
+    private boolean faseZerada = false;
     private LevelManager levelManager = new LevelManager();
+
+    private int getElementoOriginal(int linha, int coluna) {
+        if (alvo != null && alvo[linha][coluna] == 3) return 3;
+        return 0;
+    }
 
     public GameView(Context context) {
         super(context);
@@ -40,8 +46,6 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private void proximoNivel() {
         if (levelManager.nextLevel()) {
             carregarFaseAtual();
-        } else {
-            rendenizar(null);
         }
     }
 
@@ -52,6 +56,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 if (alvo[i][j] == 3 && mapa[i][j] != 2) return false;
             }
         }
+        faseZerada = true;
         return true;        //todas as caixas estao nos alvos
     }
 
@@ -59,32 +64,39 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         int newLin = playerLin + dLin;
         int newCol = playerCol + dCol;
 
-        if (newLin < 0 || newLin >= mapa.length || newCol < 0 || newCol >= mapa[0].length || venceu) {
-            return;
-        }
+        if (newLin < 0 || newLin >= mapa.length ||
+                newCol < 0 || newCol >= mapa[0].length || venceu) return;
 
         int elementoDestino = mapa[newLin][newCol];
+
         if (elementoDestino == 1) {             //se for parede nao move
             return;
         } else if (elementoDestino == 2) {      //se for caixa tenta empurrar
+            if (alvo != null && alvo[newLin][newCol] == 3) return;
+
             int caixaNewLine = newLin + dLin;
             int caixaNewCol = newCol + dCol;
-            if (caixaNewLine < 0 || caixaNewLine >= mapa.length || caixaNewCol < 0 ||
-                    caixaNewCol >= mapa[0].length) {
-                return;
-            }
 
-            int alemCaixa =  mapa[caixaNewLine][caixaNewCol];
+            if (caixaNewLine < 0 || caixaNewLine >= mapa.length || caixaNewCol < 0 ||
+                    caixaNewCol >= mapa[0].length) return;
+
+            int alemCaixa = mapa[caixaNewLine][caixaNewCol];
+
             if (alemCaixa == 1 || alemCaixa == 2) {
                 return;
             } else if (alemCaixa == 0 || alemCaixa == 3) {
                 mapa[caixaNewLine][caixaNewCol] = 2;
-                mapa[newLin][newCol] = 0;
+                mapa[newLin][newCol] = getElementoOriginal(newLin, newCol);
+                mapa[playerLin][playerCol] = getElementoOriginal(playerLin, playerCol);
                 playerLin = newLin;
                 playerCol = newCol;
-                if (checkVitory()) venceu = true;
+                if (checkVitory()) {
+                    faseZerada = true;
+                    venceu = true;
+                }
             }
-        } else {                                //se for chao ou o destino move
+        } else {                                //se for chao ou o destino vazio move
+            mapa[playerLin][playerCol] = getElementoOriginal(playerLin, playerCol);
             playerLin = newLin;
             playerCol = newCol;
         }
@@ -148,16 +160,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public void rendenizar(Canvas canvas) {
         if (canvas != null) {
-            if (venceu) {
-                float centroX = getWidth() / 2f;
-                float centroY = getHeight() / 2f;
-                paint.setColor(Color.RED);
-                paint.setTextSize(80f);
-                paint.setTextAlign(Paint.Align.CENTER);
-                canvas.drawText("🎉 VOCÊ VENCEU!", centroX, centroY, paint);
-            }
-            // Fundo da tela
             canvas.drawColor(Color.BLACK);
+
             // Desenhar a matriz linha por linha e coluna por coluna
             for (int linha = 0; linha < mapa.length; linha++) {
                 for (int coluna = 0; coluna < mapa[linha].length; coluna++) {
@@ -185,6 +189,17 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                                 paint);
                     }
                 }
+            }
+            if (venceu || faseZerada) {
+                float centroX = getWidth() / 2f;
+                float centroY = getHeight() / 2f;
+                paint.setColor(Color.RED);
+                paint.setTextSize(80f);
+                paint.setTextAlign(Paint.Align.CENTER);
+                canvas.drawText("🎉 VOCÊ VENCEU!", centroX, centroY - 50f, paint);
+                paint.setTextSize(80f);
+                paint.setColor(Color.WHITE);
+                canvas.drawText("NEXT LEVEL", centroX, centroY + 60f, paint);
             }
         }
     }
