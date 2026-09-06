@@ -2,23 +2,22 @@ package com.example.debyempurratudo;
 import java.util.ArrayList;
 import java.util.List;
 
+// 1 - Parede
+// 0 - Chao vazio
+// 2 - Caixa
+// 3 - Destino
+// OBS:
+// O jogador NAO esta representado com 4.
+// A posicao inicial do jogador deve ser definida
+// separadamente pela classe do jogo.
+
+
 public class LevelManager {
     private int nivelAtual = 0;
     private final List<int[][]> mapas = new ArrayList<>();
     private final List<int[][]> alvos = new ArrayList<>();
 
     private void chargeLevels() {
-
-        // 1 - Parede
-        // 0 - Chao vazio
-        // 2 - Caixa
-        // 3 - Destino
-        //
-        // OBS:
-        // O jogador NAO esta representado com 4.
-        // A posicao inicial do jogador deve ser definida
-        // separadamente pela classe do jogo.
-
         // ============================================================
         // NIVEL 1 - Tutorial
         // ============================================================

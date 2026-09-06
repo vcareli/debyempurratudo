@@ -3,12 +3,21 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-//import android.widget.Toast;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.RectF;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
+    private Bitmap imgParede;
+    private Bitmap imgChao;
+    private Bitmap imgBuraco;
+    private Bitmap imgCaixa;
+    private Bitmap imgDeby;
     private GameThread gameThread;
     private final Paint paint;
     private int playerLin;
@@ -18,6 +27,11 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private int[][] mapa;
     private int[][] alvo;
     private boolean faseZerada = false;
+    private final RectF btnRestartLevel = new RectF();
+    private final RectF btnCima = new RectF();
+    private final RectF btnBaixo = new RectF();
+    private final RectF btnEsquerda = new RectF();
+    private final RectF btnDireita = new RectF();
     private LevelManager levelManager = new LevelManager();
 
     private int getElementoOriginal(int linha, int coluna) {
@@ -30,7 +44,25 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         getHolder().addCallback(this);
         gameThread = new GameThread(getHolder(), this);
         paint = new Paint();
+        carregarImg();
         carregarFaseAtual();
+    }
+
+    private void carregarImg() {
+        imgParede = BitmapFactory.decodeResource(getResources(), R.drawable.stone);
+        imgChao = BitmapFactory.decodeResource(getResources(), R.drawable.chao);
+        imgBuraco = BitmapFactory.decodeResource(getResources(), R.drawable.poco);
+        imgDeby = BitmapFactory.decodeResource(getResources(), R.drawable.deby);
+        imgCaixa = BitmapFactory.decodeResource(getResources(), R.drawable.skull);
+    }
+
+    private void restartLevel() {
+        this.mapa = levelManager.getMapaAtual();
+        this.alvo = levelManager.getAlvoAtual();
+        this.playerCol = 1;
+        this.playerLin = 1;
+        this.venceu = false;
+        this.faseZerada = false;
     }
 
     private void carregarFaseAtual() {
@@ -132,29 +164,35 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            if (venceu) {
+            float touchX = event.getX();
+            float touchY = event.getY();
+
+            // 1. Checa se o toque foi no Botão Virtual de Reset
+            if (btnRestartLevel.contains(touchX, touchY)) {
+                restartLevel();
+                return true;
+            }
+
+            // 2. Se o jogador já venceu a fase e tocou fora do reset -> Próximo Nível!
+            if (venceu || faseZerada) {
                 proximoNivel();
                 return true;
             }
-            float touchX = event.getX();
-            float touchY = event.getY();
-            int larguraTela = getWidth();
-            int alturaTela = getHeight();
-            //Logica quadrantes para navegacao
-            //Se tocar metade superior -> sobe
-            //Se tocar metade inferior -> desce
-            //Se tocar lateral esq -> esq
-            //Se tocar lateral dir -> dir
-            if (touchY < alturaTela / 3f) {
-                tentarMover(-1, 0);
-            } else if (touchY > (alturaTela * 2) / 3f) {
-                tentarMover(1, 0);;
-            } else if (touchX < larguraTela / 2f) {
-                tentarMover(0, -1);;
-            } else if (touchX > larguraTela / 2f) {
-                tentarMover(0, 1);;
+
+            // 3. Checa os cliques nos botões do D-Pad para mover a Deby
+            if (btnCima.contains(touchX, touchY)) {
+                tentarMover(-1, 0); // Sobe 1 linha
+                return true;
+            } else if (btnBaixo.contains(touchX, touchY)) {
+                tentarMover(1, 0); // Desce 1 linha
+                return true;
+            } else if (btnEsquerda.contains(touchX, touchY)) {
+                tentarMover(0, -1); // Volta 1 coluna
+                return true;
+            } else if (btnDireita.contains(touchX, touchY)) {
+                tentarMover(0, 1); // Avança 1 coluna
+                return true;
             }
-            return true;
         }
         return super.onTouchEvent(event);
     }
@@ -167,30 +205,78 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             for (int linha = 0; linha < mapa.length; linha++) {
                 for (int coluna = 0; coluna < mapa[linha].length; coluna++) {
                     int elemento = mapa[linha][coluna];
+                    int left = coluna * tamanhoBloco;
+                    int top = linha * tamanhoBloco;
+                    int right = left + tamanhoBloco;
+                    int bottom = top + tamanhoBloco;
+                    Rect destRect = new Rect(left, top, right, bottom);
 
-                    if (elemento == 1) {
-                        paint.setColor(Color.GRAY); // Parede é cinza
-                    } else if(elemento == 2) {
-                        paint.setColor(Color.YELLOW);
-                    } else if(elemento == 3) {
-                        paint.setColor(Color.RED);
-                    } else {
-                        paint.setColor(Color.DKGRAY); // Chão é cinza escuro
+                    if (imgChao != null)
+                        canvas.drawBitmap(imgChao, null, destRect, paint);
+                    if (elemento == 1 && imgParede != null) {
+                        canvas.drawBitmap(imgParede, null, destRect, paint);
+                    } else if(elemento == 2 && imgCaixa != null) {
+                        canvas.drawBitmap(imgCaixa, null, destRect, paint);
+                    } else if(elemento == 3 && imgBuraco != null) {
+                        canvas.drawBitmap(imgBuraco, null, destRect, paint);
                     }
-                    float left = coluna * tamanhoBloco;
-                    float top = linha * tamanhoBloco;
-                    float right = left + tamanhoBloco;
-                    float bottom = top + tamanhoBloco;
-                    canvas.drawRect(left, top, right, bottom, paint);
-                    if (linha == playerLin && coluna == playerCol) {
-                        paint.setColor(Color.BLUE);
-                        canvas.drawCircle(left + tamanhoBloco/2f,
-                                top + tamanhoBloco/2f,
-                                tamanhoBloco/3f,
-                                paint);
+
+                    //canvas.drawRect(left, top, right, bottom, paint);
+                    if (linha == playerLin && coluna == playerCol && imgDeby != null) {
+                        canvas.drawBitmap(imgDeby, null, destRect, paint);
                     }
                 }
             }
+            // Botoes reiniciar e direcionais
+            // --- DESENHO DO D-PAD (CONTROLE VIRTUAL) ---
+            float tamanhoBtn = 130f; // Tamanho de cada botão em pixels
+            float centroControleX = getWidth() / 2f; // Centralizado horizontalmente
+            float centroControleY = getHeight() - 220f; // Posicionado na parte inferior da tela
+
+            // Define as posições dos 4 botões na tela em formato de cruz
+            btnCima.set(centroControleX - tamanhoBtn / 2f, centroControleY - tamanhoBtn * 1.5f,
+                    centroControleX + tamanhoBtn / 2f, centroControleY - tamanhoBtn / 2f);
+
+            btnBaixo.set(centroControleX - tamanhoBtn / 2f, centroControleY + tamanhoBtn / 2f,
+                    centroControleX + tamanhoBtn / 2f, centroControleY + tamanhoBtn * 1.5f);
+
+            btnEsquerda.set(centroControleX - tamanhoBtn * 1.5f, centroControleY - tamanhoBtn / 2f,
+                    centroControleX - tamanhoBtn / 2f, centroControleY + tamanhoBtn / 2f);
+
+            btnDireita.set(centroControleX + tamanhoBtn / 2f, centroControleY - tamanhoBtn / 2f,
+                    centroControleX + tamanhoBtn * 1.5f, centroControleY + tamanhoBtn / 2f);
+
+            // Configuração da pintura dos botões
+            paint.setColor(Color.DKGRAY);
+
+            // Desenha o fundo dos 4 botões com cantos arredondados
+            canvas.drawRoundRect(btnCima, 15f, 15f, paint);
+            canvas.drawRoundRect(btnBaixo, 15f, 15f, paint);
+            canvas.drawRoundRect(btnEsquerda, 15f, 15f, paint);
+            canvas.drawRoundRect(btnDireita, 15f, 15f, paint);
+
+            // Desenha os ícones/textos dentro dos botões
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(50f);
+            paint.setTextAlign(Paint.Align.CENTER);
+
+            canvas.drawText("▲", btnCima.centerX(), btnCima.centerY() + 15f, paint);
+            canvas.drawText("▼", btnBaixo.centerX(), btnBaixo.centerY() + 15f, paint);
+            canvas.drawText("◀", btnEsquerda.centerX(), btnEsquerda.centerY() + 15f, paint);
+            canvas.drawText("▶", btnDireita.centerX(), btnDireita.centerY() + 15f, paint);
+            //Botao reset
+            float larguraBotao = 220f;
+            float alturaBotao = 80f;
+            float margemDireita = getWidth() - 20f;
+            float margemTopo = 20f;
+            btnRestartLevel.set(margemDireita - larguraBotao, margemTopo, margemDireita, margemTopo + alturaBotao);
+            paint.setColor(Color.RED);
+            canvas.drawRoundRect(btnRestartLevel, 20f, 20f, paint);
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(36f);
+            paint.setTextAlign(Paint.Align.CENTER);
+            canvas.drawText("🔄 Reset", btnRestartLevel.centerX(), btnRestartLevel.centerY() + 12f, paint);
+
             if (venceu || faseZerada) {
                 float centroX = getWidth() / 2f;
                 float centroY = getHeight() / 2f;
