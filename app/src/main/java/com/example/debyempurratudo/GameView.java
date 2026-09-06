@@ -32,7 +32,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final RectF btnBaixo = new RectF();
     private final RectF btnEsquerda = new RectF();
     private final RectF btnDireita = new RectF();
-    private LevelManager levelManager = new LevelManager();
+    private LevelManager levelManager;
 
     private int getElementoOriginal(int linha, int coluna) {
         if (alvo != null && alvo[linha][coluna] == 3) return 3;
@@ -44,6 +44,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         getHolder().addCallback(this);
         gameThread = new GameThread(getHolder(), this);
         paint = new Paint();
+        levelManager = new LevelManager(context);
+
         carregarImg();
         carregarFaseAtual();
     }
@@ -204,24 +206,27 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             // Desenhar a matriz linha por linha e coluna por coluna
             for (int linha = 0; linha < mapa.length; linha++) {
                 for (int coluna = 0; coluna < mapa[linha].length; coluna++) {
-                    int elemento = mapa[linha][coluna];
+                    int elementoMapa = mapa[linha][coluna];
+                    int elementoAlvo = (alvo != null) ? alvo[linha][coluna] : 0;
                     int left = coluna * tamanhoBloco;
                     int top = linha * tamanhoBloco;
                     int right = left + tamanhoBloco;
                     int bottom = top + tamanhoBloco;
                     Rect destRect = new Rect(left, top, right, bottom);
 
+                    //Camada 1 - Chao
                     if (imgChao != null)
                         canvas.drawBitmap(imgChao, null, destRect, paint);
-                    if (elemento == 1 && imgParede != null) {
-                        canvas.drawBitmap(imgParede, null, destRect, paint);
-                    } else if(elemento == 2 && imgCaixa != null) {
-                        canvas.drawBitmap(imgCaixa, null, destRect, paint);
-                    } else if(elemento == 3 && imgBuraco != null) {
+                    //Camada 2 - alvo
+                    if (elementoAlvo == 3 && imgBuraco != null)
                         canvas.drawBitmap(imgBuraco, null, destRect, paint);
+                    //Camada 3 - parede ou caixa
+                    if (elementoMapa == 1 && imgParede != null) {
+                        canvas.drawBitmap(imgParede, null, destRect, paint);
+                    } else if(elementoMapa == 2 && imgCaixa != null) {
+                        canvas.drawBitmap(imgCaixa, null, destRect, paint);
                     }
-
-                    //canvas.drawRect(left, top, right, bottom, paint);
+                    //Camada 4 - player
                     if (linha == playerLin && coluna == playerCol && imgDeby != null) {
                         canvas.drawBitmap(imgDeby, null, destRect, paint);
                     }
@@ -265,11 +270,12 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawText("◀", btnEsquerda.centerX(), btnEsquerda.centerY() + 15f, paint);
             canvas.drawText("▶", btnDireita.centerX(), btnDireita.centerY() + 15f, paint);
             //Botao reset
-            float larguraBotao = 220f;
+            float larguraBotao = 200f;
             float alturaBotao = 80f;
-            float margemDireita = getWidth() - 20f;
-            float margemTopo = 20f;
-            btnRestartLevel.set(margemDireita - larguraBotao, margemTopo, margemDireita, margemTopo + alturaBotao);
+            float margemEsquerda = 30f;
+            float margemFundoTela = 60f;
+            btnRestartLevel.set(margemEsquerda, getHeight() - margemFundoTela - alturaBotao,
+                    margemEsquerda + larguraBotao, getHeight() - margemFundoTela);
             paint.setColor(Color.RED);
             canvas.drawRoundRect(btnRestartLevel, 20f, 20f, paint);
             paint.setColor(Color.WHITE);
@@ -278,8 +284,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawText("🔄 Reset", btnRestartLevel.centerX(), btnRestartLevel.centerY() + 12f, paint);
 
             if (venceu || faseZerada) {
-                float centroX = getWidth() / 2f;
-                float centroY = getHeight() / 2f;
+                float centroX = getWidth() / 2f ;
+                float centroY = (getHeight() / 2f) + 600f;
                 paint.setColor(Color.RED);
                 paint.setTextSize(80f);
                 paint.setTextAlign(Paint.Align.CENTER);
