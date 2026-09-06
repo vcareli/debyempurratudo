@@ -21,35 +21,31 @@ public class GameThread extends Thread {
 
     @Override
     public void run() {
-        long tempoInicio = 0;
-        long tempoDecorrido = 0;
-        long tempoEspera = 0;
-
         while (isRunning) {
             Canvas canvas = null;
             try {
+                // Tenta travar o Canvas para desenho
                 canvas = surfaceHolder.lockCanvas();
                 synchronized (surfaceHolder) {
-                    if (canvas != null) {
-                        gameView.rendenizar(canvas);
+                    if (canvas != null) gameView.rendenizar(canvas);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                // Garante que o Canvas seja liberado mesmo se der erro
+                if (canvas != null) {
+                    try {
+                        surfaceHolder.unlockCanvasAndPost(canvas);
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-            } finally {
-                if (canvas != null) {
-                    surfaceHolder.unlockCanvasAndPost(canvas);
-                }
             }
-            //Calcula tempo para desenhar quadro
-            tempoDecorrido = System.currentTimeMillis() - tempoInicio;
-
-            //Calcula tempo falta
-            tempoEspera = TEMPO_FRAME - tempoDecorrido;
-            if (tempoEspera > 0) {
-                try {
-                    Thread.sleep(tempoEspera);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            // Controle básico de FPS (evita sobrecarregar a CPU)
+            try {
+                Thread.sleep(16); // Aproximadamente 60 FPS
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }

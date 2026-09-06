@@ -152,7 +152,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     public void surfaceDestroyed(SurfaceHolder holder) {
         //Encerra Thread de forma segura
         boolean retry = true;
-        gameThread.setRunning(true);
+        gameThread.setRunning(false);
         while (retry) {
             try {
                 gameThread.join();
@@ -214,6 +214,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     int bottom = top + tamanhoBloco;
                     Rect destRect = new Rect(left, top, right, bottom);
 
+                    if (mapa == null || linha >= mapa.length || coluna >= mapa[linha].length) {
+                        continue; // Evita tentar ler posições inválidas se o mapa estiver mudando
+                    }
                     //Camada 1 - Chao
                     if (imgChao != null)
                         canvas.drawBitmap(imgChao, null, destRect, paint);
@@ -232,6 +235,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     }
                 }
             }
+            float alturaMapaPixels = mapa.length * tamanhoBloco;
+            String sLevel = "Fase: " + (levelManager.getNivelAtual() + 1);
+            paint.setColor(Color.YELLOW);
+            paint.setTextSize(45f);
+            paint.setTextAlign(Paint.Align.CENTER);
+            float textoX = getWidth() + 30f;
+            float textoY = alturaMapaPixels + 60f;
+            canvas.drawText(sLevel, textoX, textoY, paint);
+
             // Botoes reiniciar e direcionais
             // --- DESENHO DO D-PAD (CONTROLE VIRTUAL) ---
             float tamanhoBtn = 130f; // Tamanho de cada botão em pixels
