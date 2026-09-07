@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.widget.Toast;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private Bitmap imgParede;
@@ -33,21 +34,31 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final RectF btnEsquerda = new RectF();
     private final RectF btnDireita = new RectF();
     private LevelManager levelManager;
+    private int passos = 0;
 
-    private int getElementoOriginal(int linha, int coluna) {
-        if (alvo != null && alvo[linha][coluna] == 3) return 3;
-        return 0;
-    }
-
-    public GameView(Context context) {
+    public GameView(Context context, int faseInicial) {
         super(context);
         getHolder().addCallback(this);
         gameThread = new GameThread(getHolder(), this);
         paint = new Paint();
-        levelManager = new LevelManager(context);
 
+        // 1. Instancia o LevelManager passando o contexto
+        this.levelManager = new LevelManager(context);
+
+        // 2. Define o nível inicial carregado do menu (ajustando para índice 0-based)
+        // Se faseInicial for 1, o índice será 0 (Fase 1)
+        if (faseInicial > 0) {
+            this.levelManager.setNivelAtualIndex(faseInicial - 1);
+        }
+
+        // 3. Carrega os gráficos e a fase atual
         carregarImg();
         carregarFaseAtual();
+    }
+
+    private int getElementoOriginal(int linha, int coluna) {
+        if (alvo != null && alvo[linha][coluna] == 3) return 3;
+        return 0;
     }
 
     private void carregarImg() {
@@ -65,6 +76,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         this.playerLin = 1;
         this.venceu = false;
         this.faseZerada = false;
+        this.passos = 0;
     }
 
     private void carregarFaseAtual() {
@@ -79,8 +91,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     private void proximoNivel() {
+        //Salva que o jogador completou a fase atual antes de avançar
+        int faseAtualIndex = levelManager.getNivelAtualIndex();
+        this.passos = 0;
+        SaveManager.salvarProgresso(getContext(), faseAtualIndex + 1);
+        //Tentar carregar proxima fase
         if (levelManager.nextLevel()) {
             carregarFaseAtual();
+        } else  {
+            Toast.makeText(getContext(), "🏆 Parabéns! Você zerou todas as fases!", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -99,6 +118,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         int newLin = playerLin + dLin;
         int newCol = playerCol + dCol;
 
+        //nao passa dos limites do mapa
         if (newLin < 0 || newLin >= mapa.length ||
                 newCol < 0 || newCol >= mapa[0].length || venceu) return;
 
@@ -107,8 +127,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         if (elementoDestino == 1) {             //se for parede nao move
             return;
         } else if (elementoDestino == 2) {      //se for caixa tenta empurrar
-            if (alvo != null && alvo[newLin][newCol] == 3) return;
-
+            //if (alvo != null && alvo[newLin][newCol] == 3) return;
+            passos++;
             int caixaNewLine = newLin + dLin;
             int caixaNewCol = newCol + dCol;
 
@@ -117,7 +137,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
             int alemCaixa = mapa[caixaNewLine][caixaNewCol];
 
-            if (alemCaixa == 1 || alemCaixa == 2) {
+            if (alemCaixa == 1 || alemCaixa == 2) {     //se alem da caixa tem parede ou outra caixa
                 return;
             } else if (alemCaixa == 0 || alemCaixa == 3) {
                 mapa[caixaNewLine][caixaNewCol] = 2;
@@ -131,6 +151,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 }
             }
         } else {                                //se for chao ou o destino vazio move
+            passos++;
             mapa[playerLin][playerCol] = getElementoOriginal(playerLin, playerCol);
             playerLin = newLin;
             playerCol = newCol;
@@ -200,6 +221,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void rendenizar(Canvas canvas) {
+        int offsetTop = 120;
         if (canvas != null) {
             canvas.drawColor(Color.BLACK);
 
@@ -209,7 +231,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     int elementoMapa = mapa[linha][coluna];
                     int elementoAlvo = (alvo != null) ? alvo[linha][coluna] : 0;
                     int left = coluna * tamanhoBloco;
-                    int top = linha * tamanhoBloco;
+                    int top = (linha * tamanhoBloco) + offsetTop;
                     int right = left + tamanhoBloco;
                     int bottom = top + tamanhoBloco;
                     Rect destRect = new Rect(left, top, right, bottom);
@@ -235,14 +257,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                     }
                 }
             }
+            //Mensagem Fase n.
             float alturaMapaPixels = mapa.length * tamanhoBloco;
             String sLevel = "Fase: " + (levelManager.getNivelAtual() + 1);
             paint.setColor(Color.YELLOW);
             paint.setTextSize(45f);
             paint.setTextAlign(Paint.Align.CENTER);
-            float textoX = getWidth() + 30f;
-            float textoY = alturaMapaPixels + 60f;
+            float textoX = 100f;
+            float textoY = (alturaMapaPixels + 60f) + offsetTop;
             canvas.drawText(sLevel, textoX, textoY, paint);
+            //Mensagem num de passos
+            String nPassos = "Passos: " + passos;
+            paint.setColor(Color.YELLOW);
+            paint.setTextSize(45f);
+            paint.setTextAlign(Paint.Align.CENTER);
+            float passosX = getWidth() - 150f;
+            canvas.drawText(nPassos, passosX, textoY, paint);
+
 
             // Botoes reiniciar e direcionais
             // --- DESENHO DO D-PAD (CONTROLE VIRTUAL) ---
@@ -281,6 +312,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             canvas.drawText("▼", btnBaixo.centerX(), btnBaixo.centerY() + 15f, paint);
             canvas.drawText("◀", btnEsquerda.centerX(), btnEsquerda.centerY() + 15f, paint);
             canvas.drawText("▶", btnDireita.centerX(), btnDireita.centerY() + 15f, paint);
+
             //Botao reset
             float larguraBotao = 200f;
             float alturaBotao = 80f;

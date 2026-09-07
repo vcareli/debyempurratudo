@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@layout/bg_inicio"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="24dp"
+        android:text="Escolha a Fase"
+        android:textColor="#FFD700"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <!-- Grade que gerará os 100 botões dinamicamente em 4 colunas -->
+    <GridView
+        android:id="@+id/gridViewFases"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="4"
+        android:horizontalSpacing="12dp"
+        android:verticalSpacing="12dp"
+        android:gravity="center" />
+
+</LinearLayout>

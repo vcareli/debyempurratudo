@@ -29,6 +29,20 @@ public class LevelManager {
         chargeLevelsJSON(context);
     }
 
+    public void setNivelAtualIndex(int index) {
+        if (index >= 0 && index < mapas.size()) {
+            this.nivelAtual = index;
+        }
+    }
+
+    public int getNivelAtualIndex() {
+        return this.nivelAtual;
+    }
+
+    public int getTotalFases() {
+        return mapas.size();
+    }
+
     private void chargeLevelsJSON(Context context) {
         try {
             // 1. Abre o arquivo fases.json da pasta assets

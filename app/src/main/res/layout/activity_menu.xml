@@ -1,10 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MenuActivity">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+
+    android:background="@layout/bg_inicio"
+
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="30dp">
+
+
+    <!-- Logo -->
+    <ImageView
+        android:id="@+id/imgLogo"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="10dp"
+
+        android:adjustViewBounds="true"
+        android:contentDescription="Deby Empurra Tudo"
+
+        android:scaleType="fitCenter"
+
+        app:srcCompat="@drawable/fundo" />
+
+
+    <!-- Personagem -->
+    <ImageView
+        android:id="@+id/imgDeby"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="25dp"
+
+        android:adjustViewBounds="true"
+        android:contentDescription="Deby"
+
+        android:scaleType="centerInside"
+
+        app:srcCompat="@drawable/deby" />
+
+
+    <!-- Título -->
+    <TextView
+        android:id="@+id/txtTitulo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_marginBottom="28dp"
+
+        android:text="EMPURRA TUDO!"
+        android:textColor="#FFD700"
+        android:textSize="26sp"
+        android:textStyle="bold"
+
+        android:gravity="center" />
+
+
+    <!-- Botão Jogar -->
+    <Button
+        android:id="@+id/btnJogar"
+
+        android:layout_width="240dp"
+        android:layout_height="60dp"
+
+        android:layout_marginBottom="14dp"
+
+        android:background="@layout/button_jogar"
+
+        android:text="▶  JOGAR"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="21sp"
+        android:textStyle="bold"
+
+        android:elevation="6dp" />
+
+
+    <!-- Botão Fases -->
+    <Button
+        android:id="@+id/btnFases"
+
+        android:layout_width="240dp"
+        android:layout_height="60dp"
+
+        android:background="@layout/button_fases"
+
+        android:text="▦  Fases"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+
+        android:elevation="6dp" />
+
+
+    <!-- Versão -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_marginTop="30dp"
+
+        android:text="v1.0"
+        android:textColor="#888888"
+        android:textSize="12sp" />
+
+</LinearLayout>
