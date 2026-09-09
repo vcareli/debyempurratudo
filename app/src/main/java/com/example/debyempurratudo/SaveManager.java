@@ -22,4 +22,20 @@ public class SaveManager {
             editor.apply();     // Salva em segundo plano de forma segura
         }
     }
+
+    // Ocorrerá o reset para o estado inicial (fase 1)
+    public static void resetarProgresso(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(KEY_FASE_LIBERADA, 1); // Define explicitamente a fase inicial
+        editor.apply();
+    }
+
+    // Apaga todas as chaves e dados salvos no arquivo XML
+    public static void limparDados(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear(); // Apaga todo o conteúdo de PREF_NAME
+        editor.apply();
+    }
 }

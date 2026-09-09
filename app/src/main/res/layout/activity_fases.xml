@@ -1,30 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@layout/bg_inicio"
+
     android:orientation="vertical"
-    android:padding="16dp">
 
+    android:background="@layout/bg_inicio"
+
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="20dp">
+
+
+    <!-- Título -->
     <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="24dp"
-        android:text="Escolha a Fase"
-        android:textColor="#FFD700"
-        android:textSize="26sp"
-        android:textStyle="bold" />
+        android:id="@+id/txtTituloFases"
 
-    <!-- Grade que gerará os 100 botões dinamicamente em 4 colunas -->
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:gravity="center"
+
+        android:text="ESCOLHA A FASE"
+        android:textColor="#FFD700"
+        android:textSize="28sp"
+        android:textStyle="bold"
+
+        android:layout_marginBottom="6dp" />
+
+
+    <!-- Subtítulo -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:gravity="center"
+
+        android:text="Até onde você consegue chegar?"
+        android:textColor="#B0B8D0"
+        android:textSize="14sp"
+
+        android:layout_marginBottom="18dp" />
+
+
+    <!-- Barra superior -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+
+        android:layout_marginBottom="18dp">
+
+
+        <!-- Progresso -->
+        <TextView
+            android:id="@+id/txtProgresso"
+
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+
+            android:layout_weight="1"
+
+            android:text="Fases: 0 / 100"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+
+        <!-- Reset -->
+        <Button
+            android:id="@+id/btnReset"
+
+            android:layout_width="80dp"
+            android:layout_height="40dp"
+
+            android:background="@layout/button_jogar"
+
+            android:elevation="4dp"
+
+            android:text="↻"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+
+    <!-- Grade das fases -->
     <GridView
         android:id="@+id/gridViewFases"
+
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+
+        android:layout_weight="1"
+
         android:numColumns="4"
-        android:horizontalSpacing="12dp"
-        android:verticalSpacing="12dp"
-        android:gravity="center" />
+
+        android:horizontalSpacing="10dp"
+        android:verticalSpacing="10dp"
+
+        android:gravity="center"
+
+        android:stretchMode="columnWidth"
+
+        android:columnWidth="65dp"
+
+        android:padding="4dp"
+
+        android:clipToPadding="false" />
+
 
 </LinearLayout>

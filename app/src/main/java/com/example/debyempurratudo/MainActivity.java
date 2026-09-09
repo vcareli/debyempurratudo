@@ -11,6 +11,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Força os botões físicos do celular a aumentarem o volume do jogo (Mídia)
+        setVolumeControlStream(android.media.AudioManager.STREAM_MUSIC);
+
         // Recebe o número da fase enviado pelo Menu
         int faseInicial = getIntent().getIntExtra("FASE_INICIAL", 1);
 

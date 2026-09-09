@@ -34,6 +34,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     private final RectF btnEsquerda = new RectF();
     private final RectF btnDireita = new RectF();
     private LevelManager levelManager;
+    private SoundManager soundManager;
     private int passos = 0;
 
     public GameView(Context context, int faseInicial) {
@@ -51,6 +52,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             this.levelManager.setNivelAtualIndex(faseInicial - 1);
         }
 
+        this.soundManager = new SoundManager(context);
         // 3. Carrega os gráficos e a fase atual
         carregarImg();
         carregarFaseAtual();
@@ -62,11 +64,19 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     private void carregarImg() {
-        imgParede = BitmapFactory.decodeResource(getResources(), R.drawable.stone);
-        imgChao = BitmapFactory.decodeResource(getResources(), R.drawable.chao);
-        imgBuraco = BitmapFactory.decodeResource(getResources(), R.drawable.poco);
-        imgDeby = BitmapFactory.decodeResource(getResources(), R.drawable.deby);
-        imgCaixa = BitmapFactory.decodeResource(getResources(), R.drawable.skull);
+        // 1. Carrega as imagens brutas da pasta res/drawable
+        if (tamanhoBloco <= 0 ) return;    //Protecao contra tamanho zero
+        Bitmap rawDeby = BitmapFactory.decodeResource(getResources(), R.drawable.deby);
+        Bitmap rawParede = BitmapFactory.decodeResource(getResources(), R.drawable.stone);
+        Bitmap rawCaixa = BitmapFactory.decodeResource(getResources(), R.drawable.skull);
+        Bitmap rawChao = BitmapFactory.decodeResource(getResources(), R.drawable.chao);
+        Bitmap rawBuraco = BitmapFactory.decodeResource(getResources(), R.drawable.poco);
+        // 2. Redimensiona UMA ÚNICA VEZ para o tamanho exato do bloco da grade
+        imgDeby = Bitmap.createScaledBitmap(rawDeby, tamanhoBloco, tamanhoBloco, true);
+        imgParede = Bitmap.createScaledBitmap(rawParede, tamanhoBloco, tamanhoBloco, true);
+        imgCaixa = Bitmap.createScaledBitmap(rawCaixa, tamanhoBloco, tamanhoBloco, true);
+        imgChao = Bitmap.createScaledBitmap(rawChao, tamanhoBloco, tamanhoBloco, true);
+        imgBuraco = Bitmap.createScaledBitmap(rawBuraco, tamanhoBloco, tamanhoBloco, true);
     }
 
     private void restartLevel() {
@@ -139,19 +149,41 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
             if (alemCaixa == 1 || alemCaixa == 2) {     //se alem da caixa tem parede ou outra caixa
                 return;
-            } else if (alemCaixa == 0 || alemCaixa == 3) {
+            } else if (alemCaixa == 0) {
                 mapa[caixaNewLine][caixaNewCol] = 2;
                 mapa[newLin][newCol] = getElementoOriginal(newLin, newCol);
                 mapa[playerLin][playerCol] = getElementoOriginal(playerLin, playerCol);
                 playerLin = newLin;
                 playerCol = newCol;
                 if (checkVitory()) {
+                    if (soundManager != null) {
+                        soundManager.tocarWin();
+                    }
+                    faseZerada = true;
+                    venceu = true;
+                }
+            } else if (alemCaixa == 3) {
+                if (soundManager != null) {
+                    soundManager.tocarCaixa();
+                }
+                mapa[caixaNewLine][caixaNewCol] = 2;
+                mapa[newLin][newCol] = getElementoOriginal(newLin, newCol);
+                mapa[playerLin][playerCol] = getElementoOriginal(playerLin, playerCol);
+                playerLin = newLin;
+                playerCol = newCol;
+                if (checkVitory()) {
+                    if (soundManager != null) {
+                        soundManager.tocarWin();
+                    }
                     faseZerada = true;
                     venceu = true;
                 }
             }
         } else {                                //se for chao ou o destino vazio move
             passos++;
+            if (soundManager != null) {
+                soundManager.tocarPassos();
+            }
             mapa[playerLin][playerCol] = getElementoOriginal(playerLin, playerCol);
             playerLin = newLin;
             playerCol = newCol;
@@ -160,8 +192,15 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        gameThread.setRunning(true);
-        gameThread.start();
+        // 1. Descobrimos o tamanho do bloco AGORA que a tela já existe no Android
+        int colunasDoMapa = levelManager.getMapaAtual()[0].length;
+        tamanhoBloco = getWidth() / colunasDoMapa;
+        carregarImg();
+        // 3. Inicia a Thread do jogo com segurança
+        if (gameThread.getState() == Thread.State.NEW) {
+            gameThread.setRunning(true);
+            gameThread.start();
+        }
     }
 
     @Override
@@ -172,6 +211,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         //Encerra Thread de forma segura
+        if (soundManager != null) soundManager.liberar();
         boolean retry = true;
         gameThread.setRunning(false);
         while (retry) {
@@ -259,7 +299,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
             }
             //Mensagem Fase n.
             float alturaMapaPixels = mapa.length * tamanhoBloco;
-            String sLevel = "Fase: " + (levelManager.getNivelAtual() + 1);
+            String sLevel = "Fase: " + levelManager.getNivelAtual();
             paint.setColor(Color.YELLOW);
             paint.setTextSize(45f);
             paint.setTextAlign(Paint.Align.CENTER);
